@@ -1,0 +1,74 @@
+  
+version: '3.8'
+
+# Services
+services:
+
+  # Nginx Service
+  nginx:
+    image: nginx:1.19-alpine
+    ports:
+      - '80:80'
+    volumes:
+      - ./src:/var/www/php
+      - ./.docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - php
+
+  # Worker Service
+  frontend:
+    build:
+      context: ./src
+      target: frontend
+    working_dir: /var/www/php
+    volumes:
+      - ./src:/var/www/php
+    depends_on:
+      - php
+
+  # PHP Service
+  php:
+    build:
+      context: ./src
+      target: php
+    working_dir: /var/www/php
+    volumes:
+      - ./src:/var/www/php
+      - ./.docker/scripts:/opt/files
+    depends_on:
+      redis:
+        condition: service_started
+
+  # general purpose worker
+  worker:
+    build:
+      context: ./src
+      target: worker
+    working_dir: /var/www/php
+    volumes:
+      - ./src:/var/www/php
+    depends_on:
+      - php
+  
+  # Scheduler Service
+  scheduler:
+    image: mcuadros/ofelia:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.docker/scheduler/config.ini:/etc/ofelia/config.ini
+    depends_on:
+      - php
+
+  # Redis Service
+  redis:
+    image: redis:6-alpine
+    ports:
+      - 6379:6379
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+# Volumes
+volumes:
+
+  redisdata:

@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Install Composer dependencies
+composer install -d "/var/www/php"
+
+# Deal with the .env file if necessary
+if [ ! -f "/var/www/php/.env" ]; then
+    # Create .env file
+    cat > "/var/www/php/.env" << EOF
+APP_NAME=ShopifyAppV2
+APP_ENV=production
+APP_KEY=base64:A0lftiesOs4CCh3aO/ab4qQe9Phj9IK6B0t4JkaB63k=
+APP_DEBUG=false
+APP_URL='https://payo-cod.payo-develop.com'
+
+LOG_CHANNEL=stack
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=shopifyapp-prod.csbdclrqr8bg.ap-southeast-1.rds.amazonaws.com
+DB_PORT=3306
+DB_DATABASE=shopifyappv2
+DB_USERNAME=admin
+DB_PASSWORD=UNLEEbV2DOAXpnCHxVyH
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=redis
+FILESYSTEM_DRIVER=local
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+SESSION_LIFETIME=120
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=mailhog
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=null
+MAIL_FROM_NAME="${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_APP_CLUSTER=mt1
+
+MIX_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+MIX_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+
+PAYO_CHECK_CREDENTIALS_ENDPOINT=/api/check
+PAYO_CREATE_ORDER_ENDPOINT=/order/create
+PAYO_DEFAULT_PRODUCT_ID=6x1309936
+PAYO_STAGING_URL='http://cod.payo.asia'
+PAYO_PRODUCTION_URL='http://cod.payo.asia'
+
+SHOPIFY_API_KEY=253a22105852ccb716aaa8f896880cfd
+SHOPIFY_API_SCOPES=read_products,write_product_listings,read_orders,write_orders
+SHOPIFY_API_SECRET=9267e70aa6187623abe6014b5e580672
+SHOPIFY_API_VERSION=2021-07
+SHOPIFY_APP_NAME=payo-cod
+
+SHOPIFY_ORDER_FULFILLED_WEBHOOK=https://payo-cod.payo-develop.com/webhook/orders-fulfilled
+SHOPIFY_ORDER_UNINSTALL_WEBHOOK=https://payo-cod.payo-develop.com/webhook/app-uninstalled
+
+EOF
+
+    # Generate application key
+    php "/var/www/php/artisan" key:generate --ansi
+fi
+
+chown -R www-data:www-data storage bootstrap/cache vendor
+setfacl -d -m g:www-data:rw storage/logs
+
+# Database
+php "/var/www/php/artisan" migrate
